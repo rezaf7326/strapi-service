@@ -11,6 +11,7 @@ export default factories.createCoreController("api::message.message", {
     ctx.query.filters = {
       ...((ctx.query.filters || {}) as { [key: string]: unknown }),
       $or: [{ sender: { id: user.id } }, { receiver: { id: user.id } }],
+      $and: [{ isDeleted: false }],
     };
     strapi.log.debug(`modified filters: ${JSON.stringify(ctx.query.filters)}`);
 
@@ -34,10 +35,10 @@ export default factories.createCoreController("api::message.message", {
     if (!msg || msg.sender.id !== user.id) {
       return ctx.forbidden("You are not authorized to delete this message.");
     }
-    const deletedMsg = await strapi
+    await strapi
       .service("api::message.message")
-      .delete(msgId);
+      .update(msgId, { data: { isDeleted: true } });
 
-    return deletedMsg;
+    return msg;
   },
 });
